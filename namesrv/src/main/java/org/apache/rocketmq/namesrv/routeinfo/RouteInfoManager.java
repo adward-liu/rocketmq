@@ -49,10 +49,18 @@ public class RouteInfoManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
     private final static long BROKER_CHANNEL_EXPIRED_TIME = 1000 * 60 * 2;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    //主题与队列信息
     private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
+    // broker地址信息
     private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
+    //broker 集群信息
     private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
+    // 存活的broker信息10s后同步信息，可能不及时10s NamesrvController中的定时任务有关
+    // NameServer 每10S扫描一次所有的 broker,根据心跳包的时间得知 broker的状态，
+    // 该机制也是导致当一个 Broker 进程假死后，消息生产者无法立即感知，可能继续向其发送消息，导致失败（非高可用），
+    // 如何保证消息发送高可用
     private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
+
     private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
 
     public RouteInfoManager() {
