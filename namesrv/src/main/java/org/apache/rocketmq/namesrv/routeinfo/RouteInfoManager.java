@@ -431,6 +431,7 @@ public class RouteInfoManager {
         while (it.hasNext()) {
             Entry<String, BrokerLiveInfo> next = it.next();
             long last = next.getValue().getLastUpdateTimestamp();
+            //10s中调用一次 判断2分钟后内 Nameserver 没有收到 Broker 的心跳包，则关闭该连接
             if ((last + BROKER_CHANNEL_EXPIRED_TIME) < System.currentTimeMillis()) {
                 RemotingUtil.closeChannel(next.getValue().getChannel());
                 it.remove();
@@ -752,6 +753,7 @@ public class RouteInfoManager {
     }
 }
 
+//存活的broker信息
 class BrokerLiveInfo {
     private long lastUpdateTimestamp;
     private DataVersion dataVersion;
