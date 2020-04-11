@@ -185,7 +185,7 @@ public class DefaultMessageStore implements MessageStore {
                 result = result && this.scheduleMessageService.load();
             }
 
-            // load Commit Log
+            // load Commit Log TODO 加载commitlog
             result = result && this.commitLog.load();
 
             // load Consume Queue
