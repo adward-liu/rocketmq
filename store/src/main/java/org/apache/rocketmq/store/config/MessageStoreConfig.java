@@ -42,7 +42,7 @@ public class MessageStoreConfig {
     // this will be set by pipe of calculate filter bit map.
     private int bitMapLengthConsumeQueueExt = 64;
 
-    // CommitLog flush interval
+    // CommitLog flush interval 消息刷盘时间间隔500ms flush 操作，调用文件通道的force()方法
     // flush data to disk
     @ImportantField
     private int flushIntervalCommitLog = 500;

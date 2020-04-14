@@ -61,11 +61,11 @@ public class NamesrvController {
     private FileWatchService fileWatchService;
 
     public NamesrvController(NamesrvConfig namesrvConfig, NettyServerConfig nettyServerConfig) {
-        this.namesrvConfig = namesrvConfig;
-        this.nettyServerConfig = nettyServerConfig;
-        this.kvConfigManager = new KVConfigManager(this);
-        this.routeInfoManager = new RouteInfoManager();
-        this.brokerHousekeepingService = new BrokerHousekeepingService(this);
+        this.namesrvConfig = namesrvConfig; // namesrv相关配置
+        this.nettyServerConfig = nettyServerConfig; // netty相关配置
+        this.kvConfigManager = new KVConfigManager(this);   // KV配置管理
+        this.routeInfoManager = new RouteInfoManager(); //路由信息、topic信息管理
+        this.brokerHousekeepingService = new BrokerHousekeepingService(this);   // broker管理服务
         this.configuration = new Configuration(
                 log,
                 this.namesrvConfig, this.nettyServerConfig
@@ -75,7 +75,7 @@ public class NamesrvController {
 
     public boolean initialize() {
 
-        //初始化 获取NamesrvConfig中的相关配置加载到内存中
+        //初始化 获取NamesrvConfig中kvConfig.json中的配置到内存
         this.kvConfigManager.load();
 
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
@@ -84,6 +84,7 @@ public class NamesrvController {
         this.remotingExecutor =
                 Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
 
+        //TODO 绑定线程池与 processor
         this.registerProcessor();
 
         //每隔10s检查broker是否存活
@@ -99,6 +100,7 @@ public class NamesrvController {
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
+            //定时将configTable相关信息记录到日志文件中
             public void run() {
                 NamesrvController.this.kvConfigManager.printAllPeriodically();
             }

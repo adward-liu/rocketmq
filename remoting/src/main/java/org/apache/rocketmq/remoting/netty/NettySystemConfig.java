@@ -17,6 +17,9 @@
 
 package org.apache.rocketmq.remoting.netty;
 
+/**
+ * Netty配置文件类设置监听接口及发送接收信息用于与其他模块的远程通信
+ */
 public class NettySystemConfig {
     public static final String COM_ROCKETMQ_REMOTING_NETTY_POOLED_BYTE_BUF_ALLOCATOR_ENABLE =
         "com.rocketmq.remoting.nettyPooledByteBufAllocatorEnable";

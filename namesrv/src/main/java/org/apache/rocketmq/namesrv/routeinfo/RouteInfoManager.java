@@ -45,6 +45,7 @@ import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 import org.apache.rocketmq.common.sysflag.TopicSysFlag;
 import org.apache.rocketmq.remoting.common.RemotingUtil;
 
+// namesrv管理所有broker的路由及topic配置信息类
 public class RouteInfoManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.NAMESRV_LOGGER_NAME);
     private final static long BROKER_CHANNEL_EXPIRED_TIME = 1000 * 60 * 2;
@@ -122,6 +123,7 @@ public class RouteInfoManager {
                 this.lock.writeLock().lockInterruptibly();
 
                 Set<String> brokerNames = this.clusterAddrTable.get(clusterName);
+                //判断当前是否有broker信息
                 if (null == brokerNames) {
                     brokerNames = new HashSet<String>();
                     this.clusterAddrTable.put(clusterName, brokerNames);
@@ -130,12 +132,15 @@ public class RouteInfoManager {
 
                 boolean registerFirst = false;
 
+                //在brokerAddrTable中获取所有的brokerDate
                 BrokerData brokerData = this.brokerAddrTable.get(brokerName);
+                //如果当前不存在brokerDate，即还没有broker向namesrv注册，则直接将当前broker信息put加入
                 if (null == brokerData) {
                     registerFirst = true;
                     brokerData = new BrokerData(clusterName, brokerName, new HashMap<Long, String>());
                     this.brokerAddrTable.put(brokerName, brokerData);
                 }
+                //获取当前broke的brokerId和ip
                 Map<Long, String> brokerAddrsMap = brokerData.getBrokerAddrs();
                 //Switch slave to master: first remove <1, IP:PORT> in namesrv, then add <0, IP:PORT>
                 //The same IP:PORT must only have one record in brokerAddrTable
@@ -152,10 +157,12 @@ public class RouteInfoManager {
 
                 if (null != topicConfigWrapper
                     && MixAll.MASTER_ID == brokerId) {
+                    //如果broker注册或者如果Topic配置信息发生变更
                     if (this.isBrokerTopicConfigChanged(brokerAddr, topicConfigWrapper.getDataVersion())
                         || registerFirst) {
                         ConcurrentMap<String, TopicConfig> tcTable =
                             topicConfigWrapper.getTopicConfigTable();
+                        //根据brokername及topicconfig（read、write queue数量等）新增或者更新到topicQueueTable中
                         if (tcTable != null) {
                             for (Map.Entry<String, TopicConfig> entry : tcTable.entrySet()) {
                                 this.createAndUpdateQueueData(brokerName, entry.getValue());
@@ -164,6 +171,7 @@ public class RouteInfoManager {
                     }
                 }
 
+                //更新brokerLiveInfo的信息  brokerLiveTable中保存的对应的broker的更新时间戳，设置为当前时间
                 BrokerLiveInfo prevBrokerLiveInfo = this.brokerLiveTable.put(brokerAddr,
                     new BrokerLiveInfo(
                         System.currentTimeMillis(),
@@ -182,6 +190,7 @@ public class RouteInfoManager {
                     }
                 }
 
+                //如果不是主节点 返回主节点的信息
                 if (MixAll.MASTER_ID != brokerId) {
                     String masterAddr = brokerData.getBrokerAddrs().get(MixAll.MASTER_ID);
                     if (masterAddr != null) {

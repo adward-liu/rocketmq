@@ -45,12 +45,13 @@ public class KVConfigManager {
     public void load() {
         String content = null;
         try {
+            //将namesrvConfig 中的kvConfig.json中的配置读取到内存中
             content = MixAll.file2String(this.namesrvController.getNamesrvConfig().getKvConfigPath());
         } catch (IOException e) {
             log.warn("Load KV config table exception", e);
         }
         if (content != null) {
-            //将NamesrvConfig中的配置加载到内存
+            //将kvConfig.json中的配置读取到内存中 装换成对象
             KVConfigSerializeWrapper kvConfigSerializeWrapper =
                     KVConfigSerializeWrapper.fromJson(content, KVConfigSerializeWrapper.class);
             if (null != kvConfigSerializeWrapper) {
