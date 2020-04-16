@@ -145,6 +145,7 @@ public class NamesrvStartup {
             System.exit(-3);
         }
 
+        //钩子 系统关闭 关闭namesrvController线程池 remoteServer
         Runtime.getRuntime().addShutdownHook(new ShutdownHookThread(log, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
