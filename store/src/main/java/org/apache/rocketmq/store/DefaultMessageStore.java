@@ -65,26 +65,33 @@ import org.apache.rocketmq.store.stats.BrokerStatsManager;
 public class DefaultMessageStore implements MessageStore {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
 
+    //存储相关的配置
     private final MessageStoreConfig messageStoreConfig;
     // CommitLog
     private final CommitLog commitLog;
 
     private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
 
+    //ConsumeQueue 刷盘服务线程
     private final FlushConsumeQueueService flushConsumeQueueService;
 
+    //commitLog 过期文件删除线程
     private final CleanCommitLogService cleanCommitLogService;
 
+    //consumeQueue 过期文件删除线程
     private final CleanConsumeQueueService cleanConsumeQueueService;
 
+    //索引服务
     private final IndexService indexService;
 
     private final AllocateMappedFileService allocateMappedFileService;
 
     private final ReputMessageService reputMessageService;
 
+    //主从同步实现服务
     private final HAService haService;
 
+    //定时任务调度器，执行定时任务
     private final ScheduleMessageService scheduleMessageService;
 
     private final StoreStatsService storeStatsService;
@@ -102,10 +109,12 @@ public class DefaultMessageStore implements MessageStore {
 
     private volatile boolean shutdown = true;
 
+    //刷盘点
     private StoreCheckpoint storeCheckpoint;
 
     private AtomicLong printTimes = new AtomicLong(0);
 
+    //转发 comitlog 日志，主要是从 commitlog 转发到 consumeQueue、index 文件
     private final LinkedList<CommitLogDispatcher> dispatcherList;
 
     private RandomAccessFile lockFile;
@@ -471,6 +480,7 @@ public class DefaultMessageStore implements MessageStore {
 
     @Override
     public PutMessageResult putMessage(MessageExtBrokerInner msg) {
+        //判断 message的状态
         PutMessageStatus checkStoreStatus = this.checkStoreStatus();
         if (checkStoreStatus != PutMessageStatus.PUT_OK) {
             return new PutMessageResult(checkStoreStatus, null);
