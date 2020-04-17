@@ -60,18 +60,22 @@ public class MQFaultStrategy {
         // 直接从 topic 的所有队列中选择下一个，而不考虑该消息队列是否可用（比如Broker挂掉）。
         if (this.sendLatencyFaultEnable) {
             try {
+                //获取threadlocal中队列的下标的下一个队列
                 int index = tpInfo.getSendWhichQueue().getAndIncrement();
+                //循环获取 发送异常延迟，要确保选中的消息队列(MessageQueue)所在的Broker是正常的
                 for (int i = 0; i < tpInfo.getMessageQueueList().size(); i++) {
                     int pos = Math.abs(index++) % tpInfo.getMessageQueueList().size();
                     if (pos < 0)
                         pos = 0;
                     MessageQueue mq = tpInfo.getMessageQueueList().get(pos);
+                    //判断是否可用
                     if (latencyFaultTolerance.isAvailable(mq.getBrokerName())) {
                         if (null == lastBrokerName || mq.getBrokerName().equals(lastBrokerName))
                             return mq;
                     }
                 }
 
+                //根据 Broker 的 startTimestart 进行一个排序，值越小，排前面，然后再选择一个
                 final String notBestBroker = latencyFaultTolerance.pickOneAtLeast();
                 int writeQueueNums = tpInfo.getQueueIdByBroker(notBestBroker);
                 if (writeQueueNums > 0) {
@@ -96,6 +100,7 @@ public class MQFaultStrategy {
 
     public void updateFaultItem(final String brokerName, final long currentLatency, boolean isolation) {
         if (this.sendLatencyFaultEnable) {
+            //RocketMQ 发送消息延迟机制 根据延迟的时间 设置队列的不可用的时间
             long duration = computeNotAvailableDuration(isolation ? 30000 : currentLatency);
             this.latencyFaultTolerance.updateFaultItem(brokerName, currentLatency, duration);
         }

@@ -560,6 +560,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
             MessageQueue mq = null;
             Exception exception = null;
             SendResult sendResult = null;
+            //同步尝试3次
             int timesTotal = communicationMode == CommunicationMode.SYNC ? 1 + this.defaultMQProducer.getRetryTimesWhenSendFailed() : 1;
             int times = 0;
             String[] brokersSent = new String[timesTotal];
@@ -585,6 +586,10 @@ public class DefaultMQProducerImpl implements MQProducerInner {
                         //向 MessageQueue 发送消息
                         sendResult = this.sendKernelImpl(msg, mq, communicationMode, sendCallback, topicPublishInfo, timeout - costTime);
                         endTimestamp = System.currentTimeMillis();
+                        //开始发送到发送结束总共的耗时 来设定broker的不可用时长
+                        // latencyMax = {50L, 100L, 550L, 1000L, 2000L, 3000L, 15000L};
+                        // notAvailableDuration = {0L, 0L, 30000L, 60000L, 120000L, 180000L, 600000L};
+                        // 如果endTimestamp - beginTimestampPrev 为 550ms broker在接下来的30000ms中不可用
                         this.updateFaultItem(mq.getBrokerName(), endTimestamp - beginTimestampPrev, false);
                         switch (communicationMode) {
                             case ASYNC:
