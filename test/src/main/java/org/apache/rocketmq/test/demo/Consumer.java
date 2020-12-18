@@ -1,9 +1,7 @@
 package org.apache.rocketmq.test.demo;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
-import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyContext;
-import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
-import org.apache.rocketmq.client.consumer.listener.MessageListenerOrderly;
+import org.apache.rocketmq.client.consumer.listener.*;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageExt;
@@ -40,24 +38,30 @@ public class Consumer {
  
         consumer.subscribe("SequenceTopicTest", "TagA || TagC || TagD");
  
-        consumer.registerMessageListener(new MessageListenerOrderly() {
- 
-            Random random = new Random();
- 
+//        consumer.registerMessageListener(new MessageListenerOrderly() {
+//
+//            Random random = new Random();
+//
+//            @Override
+//            public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
+//                context.setAutoCommit(true);
+//                System.out.print(Thread.currentThread().getName() + " Receive New Messages: " );
+//                for (MessageExt msg: msgs) {
+//                    System.out.println(msg + ", content:" + new String(msg.getBody()));
+//                }
+//                try {
+//                    //模拟业务逻辑处理中...
+//                    TimeUnit.SECONDS.sleep(random.nextInt(10));
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                return ConsumeOrderlyStatus.SUCCESS;
+//            }
+//        });
+        consumer.registerMessageListener(new MessageListenerConcurrently() {
             @Override
-            public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
-                context.setAutoCommit(true);
-                System.out.print(Thread.currentThread().getName() + " Receive New Messages: " );
-                for (MessageExt msg: msgs) {
-                    System.out.println(msg + ", content:" + new String(msg.getBody()));
-                }
-                try {
-                    //模拟业务逻辑处理中...
-                    TimeUnit.SECONDS.sleep(random.nextInt(10));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return ConsumeOrderlyStatus.SUCCESS;
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
+                return null;
             }
         });
  
